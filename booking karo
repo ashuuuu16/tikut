@@ -1,0 +1,402 @@
+package com.example.allfinal;
+import javafx.application.Application;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.stage.Stage;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+
+public class goku extends Application {
+
+    private static final String IMAGE_FOLDER = "src/images/";
+
+    private final Map<String, String[]> stateDistricts = new HashMap<>();
+    private final Map<String, String[]> districtTheatres = new HashMap<>();
+
+    @Override
+    public void start(Stage primaryStage) {
+        primaryStage.setTitle("Movie Ticket Reservation");
+        setupLocationData();
+
+        ImageView bgImageView = new ImageView(new Image("file:" + IMAGE_FOLDER + "bgImage.jpg"));
+        bgImageView.setFitWidth(800);
+        bgImageView.setFitHeight(600);
+        bgImageView.setPreserveRatio(false);
+
+        Label title = new Label("Welcome to Movie Booking");
+        title.setFont(new Font("Arial", 26));
+        title.setStyle("-fx-text-fill: white; -fx-font-weight: bold;");
+
+        Label emailLabel = new Label("Email or Username:");
+        emailLabel.setStyle("-fx-text-fill: white;");
+        TextField emailField = new TextField();
+        emailField.setPromptText("example@gmail.com");
+
+        Label passwordLabel = new Label("Password:");
+        passwordLabel.setStyle("-fx-text-fill: white;");
+        PasswordField passwordField = new PasswordField();
+        passwordField.setPromptText("Enter your password");
+
+        Button loginButton = new Button("Login");
+        loginButton.setStyle("-fx-background-color: #ff5555; -fx-text-fill: white; -fx-font-weight: bold;");
+
+        loginButton.setOnAction(e -> {
+            String userEmail = emailField.getText();
+            String password = passwordField.getText();
+
+            if (userEmail.isEmpty() || password.isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, "Login Failed", "Please fill in all fields.");
+            } else {
+                showAlert(Alert.AlertType.INFORMATION, "Login Successful", "Welcome, " + userEmail + "!");
+                showLocationSelection(primaryStage);
+            }
+        });
+
+        VBox formBox = new VBox(10, title, emailLabel, emailField, passwordLabel, passwordField, loginButton);
+        formBox.setAlignment(Pos.CENTER);
+        formBox.setMaxWidth(350);
+
+        StackPane root = new StackPane(bgImageView, formBox);
+
+        Scene scene = new Scene(root, 800, 600);
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private void setupLocationData() {
+        stateDistricts.put("Bihar", new String[]{"Patna", "Gaya", "Banka","Bhagalpur", "Muzaffarpur", "Purnia", "Darbhanga", "Arrah", "Begusarai", "Katihar", "Chhapra"});
+        stateDistricts.put("Uttar Pradesh", new String[]{"Lucknow", "Kanpur", "Varanasi", "Allahabad", "Agra", "Ghaziabad", "Meerut", "Noida", "Bareilly", "Gorakhpur"});
+        stateDistricts.put("Jharkhand", new String[]{"Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Hazaribagh", "Giridih", "Deoghar", "Phusro", "Chirkunda", "Medininagar"});
+        stateDistricts.put("Delhi", new String[]{"North Delhi", "South Delhi", "East Delhi", "West Delhi", "Central Delhi", "Shahdara", "Dwarka", "Rohini", "Karol Bagh", "Janakpuri"});
+        stateDistricts.put("Maharashtra", new String[]{"Mumbai", "Pune", "Nagpur", "Nashik", "Thane", "Aurangabad", "Kolhapur", "Amravati", "Solapur", "Latur"});
+
+        for (String[] districts : stateDistricts.values()) {
+            for (String district : districts) {
+                districtTheatres.put(district, new String[]{district + " Cineplex", district + " PVR", district + " INOX"});
+            }
+        }
+    }
+
+    private void showLocationSelection(Stage stage) {
+        Label stateLabel = new Label("Select State:");
+        ComboBox<String> stateDropdown = new ComboBox<>();
+        stateDropdown.getItems().addAll(stateDistricts.keySet());
+
+        Label districtLabel = new Label("Select District:");
+        ComboBox<String> districtDropdown = new ComboBox<>();
+
+        Label theatreLabel = new Label("Select Theatre:");
+        ComboBox<String> theatreDropdown = new ComboBox<>();
+
+        stateDropdown.setOnAction(e -> {
+            String selectedState = stateDropdown.getValue();
+            districtDropdown.getItems().clear();
+            if (selectedState != null) {
+                districtDropdown.getItems().addAll(stateDistricts.get(selectedState));
+            }
+        });
+
+        districtDropdown.setOnAction(e -> {
+            String selectedDistrict = districtDropdown.getValue();
+            theatreDropdown.getItems().clear();
+            if (selectedDistrict != null) {
+                theatreDropdown.getItems().addAll(districtTheatres.get(selectedDistrict));
+            }
+        });
+
+        Button nextButton = new Button("Next");
+        nextButton.setOnAction(e -> {
+            if (stateDropdown.getValue() == null || districtDropdown.getValue() == null || theatreDropdown.getValue() == null) {
+                showAlert(Alert.AlertType.ERROR, "Selection Error", "Please select state, district, and theatre.");
+            } else {
+                showMovieSelection(stage);
+            }
+        });
+
+        VBox locationBox = new VBox(15, stateLabel, stateDropdown, districtLabel, districtDropdown, theatreLabel, theatreDropdown, nextButton);
+        locationBox.setAlignment(Pos.CENTER);
+
+        ImageView locBg = new ImageView(new Image("file:" + IMAGE_FOLDER + "location_bg.jpg"));
+        locBg.setFitWidth(800);
+        locBg.setFitHeight(600);
+        locBg.setPreserveRatio(false);
+
+        StackPane root = new StackPane(locBg, locationBox);
+
+        Scene locationScene = new Scene(root, 800, 600);
+        stage.setScene(locationScene);
+    }
+
+    private void showMovieSelection(Stage stage) {
+        TabPane tabPane = new TabPane();
+
+        tabPane.getTabs().add(createGenreTab(stage, "Action",
+                new MovieItem("Avengers: Endgame", "3h 1m", "avenger.jpg"),
+                new MovieItem("Hitman", "1h 36m", "hitman.jpg"),
+                new MovieItem("Prince of Persia", "1h 56m", "prince.jpg"),
+                new MovieItem("Gladiator", "2h 35m", "gladiator.jpg"),
+                new MovieItem("The Dark Knight", "2h 32m", "darkknight.jpg")
+        ));
+
+        tabPane.getTabs().add(createGenreTab(stage, "Comedy",
+                new MovieItem("The Mask", "1h 41m", "mask.jpg"),
+                new MovieItem("Deadpool", "1h 48m", "deadpool.jpg"),
+                new MovieItem("Home Alone", "1h 43m", "homealone.jpg"),
+                new MovieItem("The Hangover", "1h 40m", "hangover.jpg"),
+                new MovieItem("3 Idiots", "2h 50m", "3idiots.jpg")
+        ));
+
+        tabPane.getTabs().add(createGenreTab(stage, "Horror",
+                new MovieItem("The Conjuring", "1h 52m", "conjuring.jpg"),
+                new MovieItem("It", "2h 15m", "it.jpg"),
+                new MovieItem("Annabelle", "1h 39m", "annabelle.jpg"),
+                new MovieItem("Insidious", "1h 43m", "insidious.jpg"),
+                new MovieItem("A Quiet Place", "1h 30m", "quietplace.jpg")
+        ));
+
+        tabPane.getTabs().add(createGenreTab(stage, "Racing",
+                new MovieItem("Cars", "1h 57m", "cars.jpg"),
+                new MovieItem("Fast and Furious", "2h 10m", "fastfurious.jpg"),
+                new MovieItem("Rush", "2h 3m", "rush.jpg"),
+                new MovieItem("Grand Prix", "2h 56m", "grandprix.jpg"),
+                new MovieItem("Le Mans", "1h 48m", "le mans.jpg")
+        ));
+
+        tabPane.getTabs().add(createGenreTab(stage, "Sci-Fi",
+                new MovieItem("Interstellar", "2h 49m", "interstellar.jpg"),
+                new MovieItem("Inception", "2h 28m", "inception.jpg"),
+                new MovieItem("The Matrix", "2h 16m", "matrix.jpg"),
+                new MovieItem("Avatar", "2h 42m", "avatar.jpg"),
+                new MovieItem("Star Wars", "2h 1m", "starwars.jpg")
+        ));
+
+        Scene movieScene = new Scene(tabPane, 800, 600);
+        stage.setScene(movieScene);
+    }
+
+    private Tab createGenreTab(Stage stage, String genre, MovieItem... movies) {
+        FlowPane flow = new FlowPane();
+        flow.setHgap(20);
+        flow.setVgap(20);
+        flow.setAlignment(Pos.CENTER);
+
+        for (MovieItem m : movies) {
+            VBox movieBox = new VBox(5);
+            movieBox.setAlignment(Pos.CENTER);
+
+            ImageView poster = new ImageView(new Image(filePath(m.imagePath)));
+            poster.setFitWidth(150);
+            poster.setFitHeight(200);
+
+            Label name = new Label(m.name);
+            name.setFont(new Font("Arial", 14));
+            name.setStyle("-fx-font-weight: bold;");
+
+            Label duration = new Label(m.duration);
+            duration.setFont(new Font("Arial", 12));
+            duration.setStyle("-fx-text-fill: gray;");
+
+            Button selectButton = new Button("Select");
+            selectButton.setOnAction(e -> showTicketBooking(stage, m));
+
+            movieBox.getChildren().addAll(poster, name, duration, selectButton);
+            flow.getChildren().add(movieBox);
+        }
+
+        Tab tab = new Tab(genre, new ScrollPane(flow));
+        tab.setClosable(false);
+        return tab;
+    }
+
+    private void showTicketBooking(Stage stage, MovieItem movie) {
+        Map<String, Double> moviePrices = new HashMap<>();
+        moviePrices.put("Avengers: Endgame", 300.0);
+        moviePrices.put("Hitman", 250.0);
+        moviePrices.put("Prince of Persia", 220.0);
+        moviePrices.put("Gladiator", 280.0);
+        moviePrices.put("The Dark Knight", 320.0);
+        moviePrices.put("The Mask", 180.0);
+        moviePrices.put("Deadpool", 250.0);
+        moviePrices.put("Home Alone", 150.0);
+        moviePrices.put("The Hangover", 200.0);
+        moviePrices.put("3 Idiots", 270.0);
+        moviePrices.put("The Conjuring", 230.0);
+        moviePrices.put("It", 240.0);
+        moviePrices.put("Annabelle", 220.0);
+        moviePrices.put("Insidious", 210.0);
+        moviePrices.put("A Quiet Place", 250.0);
+        moviePrices.put("Cars", 200.0);
+        moviePrices.put("Fast and Furious", 280.0);
+        moviePrices.put("Rush", 270.0);
+        moviePrices.put("Grand Prix", 300.0);
+        moviePrices.put("Le Mans", 260.0);
+        moviePrices.put("Interstellar", 350.0);
+        moviePrices.put("Inception", 330.0);
+        moviePrices.put("The Matrix", 300.0);
+        moviePrices.put("Avatar", 320.0);
+        moviePrices.put("Star Wars", 290.0);
+
+        double ticketPrice = moviePrices.getOrDefault(movie.name, 200.0);
+
+        Label movieLabel = new Label("Movie: " + movie.name);
+        Label priceLabel = new Label("Ticket Price: ₹" + ticketPrice);
+
+        Label numTicketsLabel = new Label("Number of Tickets: Max Seat:200");
+        TextField numTicketsField = new TextField();
+        numTicketsField.setPromptText("Enter number");
+
+        Label seatLabel = new Label("Select Seat Type:");
+        ComboBox<String> seatDropdown = new ComboBox<>();
+        seatDropdown.getItems().addAll("Front (+₹100)", "Middle (+₹50)", "Back (+₹20)");
+
+        Label totalLabel = new Label("Total Price: ₹0");
+
+        Button calcButton = new Button("Calculate Total");
+        calcButton.setOnAction(e -> {
+            try {
+                int numTickets = Integer.parseInt(numTicketsField.getText());
+                if (numTickets <= 0) throw new NumberFormatException();
+
+                int seatCost = switch (seatDropdown.getValue()) {
+                    case "Front (+₹100)" -> 100;
+                    case "Middle (+₹50)" -> 50;
+                    case "Back (+₹20)" -> 20;
+                    default -> 0;
+                };
+
+                double total = (ticketPrice * numTickets) + seatCost;
+                totalLabel.setText("Total Price: ₹" + total);
+            } catch (NumberFormatException ex) {
+                showAlert(Alert.AlertType.ERROR, "Invalid Input", "Please enter a valid number of tickets.");
+            }
+        });
+
+        Button okButton = new Button("OK");
+        okButton.setOnAction(e -> {
+            if (seatDropdown.getValue() == null || numTicketsField.getText().isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, "Missing Info", "Please fill all details before proceeding.");
+            } else {
+                try {
+                    int numTickets = Integer.parseInt(numTicketsField.getText());
+                    int seatCost = switch (seatDropdown.getValue()) {
+                        case "Front (+₹100)" -> 100;
+                        case "Middle (+₹50)" -> 50;
+                        case "Back (+₹20)" -> 20;
+                        default -> 0;
+                    };
+                    double total = (ticketPrice * numTickets) + seatCost;
+                    showPaymentPage(stage, total);
+                } catch (NumberFormatException ex) {
+                    showAlert(Alert.AlertType.ERROR, "Invalid Input", "Enter a valid number of tickets.");
+                }
+            }
+        });
+
+        VBox layout = new VBox(15, movieLabel, priceLabel, numTicketsLabel, numTicketsField, seatLabel, seatDropdown, calcButton, totalLabel, okButton);
+        layout.setAlignment(Pos.CENTER);
+        layout.setMaxWidth(250);
+
+        ImageView ticbg = new ImageView(new Image("file:" + IMAGE_FOLDER + "ticket_bg.jpg"));
+        ticbg.setFitWidth(800);
+        ticbg.setFitHeight(600);
+        ticbg.setPreserveRatio(false);
+
+        StackPane root = new StackPane(ticbg, layout);
+
+        Scene ticketScene = new Scene(root, 800, 600);
+        stage.setScene(ticketScene);
+    }
+
+    private void showPaymentPage(Stage stage, double totalAmount) {
+        Label paymentLabel = new Label("Select Payment Method:");
+        paymentLabel.setFont(new Font("Arial", 20));
+        paymentLabel.setStyle("-fx-text-fill: black; -fx-font-weight: bold;");
+
+        ComboBox<String> paymentDropdown = new ComboBox<>();
+        paymentDropdown.getItems().addAll("PhonePe", "GPay", "Paytm");
+
+        Label upiLabel = new Label("UPI ID:");
+        upiLabel.setFont(new Font("Arial", 20));
+        upiLabel.setStyle("-fx-text-fill: black; -fx-font-weight: bold;");
+
+        TextField upiField = new TextField();
+        upiField.setPromptText("Enter your UPI ID");
+        upiField.setPrefWidth(250);
+        upiField.setMaxWidth(250);
+
+
+        Label passLabel = new Label("Password:");
+        passLabel.setFont(new Font("Arial", 20));
+        passLabel.setStyle("-fx-text-fill: black; -fx-font-weight: bold;");
+
+        PasswordField passField = new PasswordField();
+        passField.setPromptText("Enter your Password");
+        passField.setPrefWidth(250);
+        passField.setMaxWidth(250);
+
+        Button payButton = new Button("Proceed to Pay");
+        payButton.setOnAction(e -> {
+            if (paymentDropdown.getValue() == null || upiField.getText().isEmpty() || passField.getText().isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, "Payment Failed", "Fill all payment details.");
+            } else {
+                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                confirm.setTitle("Confirm Payment");
+                confirm.setHeaderText("Total Amount: ₹" + totalAmount);
+                confirm.setContentText("Do you want to proceed with the payment?");
+                confirm.showAndWait().ifPresent(response -> {
+                    if (response == ButtonType.OK) {
+                        showAlert(Alert.AlertType.INFORMATION, "Payment Successful", "Your tickets have been booked!");
+                    }
+                });
+            }
+        });
+
+        VBox layout = new VBox(15, paymentLabel, paymentDropdown, upiLabel, upiField, passLabel, passField, payButton);
+        layout.setAlignment(Pos.CENTER);
+
+        ImageView pay = new ImageView(new Image("file:" + IMAGE_FOLDER + "pay_bg.png"));
+        pay.setFitWidth(800);
+        pay.setFitHeight(600);
+        pay.setPreserveRatio(false);
+
+        StackPane root = new StackPane(pay, layout);
+
+        Scene paymentScene = new Scene(root, 800, 600);
+        stage.setScene(paymentScene);
+    }
+
+    private static String filePath(String fileName) {
+        return new File(IMAGE_FOLDER + fileName).toURI().toString();
+    }
+
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    static class MovieItem {
+        String name;
+        String duration;
+        String imagePath;
+
+        MovieItem(String name, String duration, String imagePath) {
+            this.name = name;
+            this.duration = duration;
+            this.imagePath = imagePath;
+        }
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
